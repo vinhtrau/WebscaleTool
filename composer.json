@@ -1,7 +1,7 @@
 {
   "name": "forix/module-webscale-tools",
   "version": "1.0.0",
-  "description": "N/A",
+  "description": "Webscale module support for Magento 2",
   "type": "magento2-module",
   "require": {
     "magento/framework": "*"
