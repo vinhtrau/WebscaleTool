@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="maintenance_mode_changed">
+        <observer name="webscale_maintenance" instance="Forix\WebscaleTools\Observer\Maintenance"/>
+    </event>
+    <event name="adminhtml_cache_flush_all">
+        <observer name="webscale_invalidate_cache" instance="Forix\WebscaleTools\Observer\InvalidateCache"/>
+    </event>
+    <!--<event name="adminhtml_cache_refresh_type">
+        <observer name="webscale_invalidate_cache_type" instance="Forix\WebscaleTools\Observer\InvalidateCache"/>
+    </event>-->
+    <event name="adminhtml_cache_flush_system">
+        <observer name="webscale_invalidate_cache_type" instance="Forix\WebscaleTools\Observer\InvalidateCache"/>
+    </event>
+</config>
