@@ -17,10 +17,6 @@ class InvalidateCache implements ObserverInterface{
 
     protected $_api;
     protected $_helper;
-    /**
-     * @var \Forix\WebscaleTools\Model\FlagFactory
-     */
-    protected $flagFactory;
     protected $_logger;
 
     public function __construct(
@@ -31,33 +27,14 @@ class InvalidateCache implements ObserverInterface{
     ){
         $this->_api    = $api;
         $this->_helper = $helper;
-        $this->flagFactory = $flag_factory;
         $this->_logger = $logger;
     }
 
     public function execute(Observer $observer){
-        if(!$this->_helper->isEnable()){
-            return;
-        }
-        if($this->checkFlag() > $this->_helper->getIntervalFlushCacheTime()){
+        try{
             $this->_api->flushCache();
-            $this->setFlag();
-        }else{
-            $this->_logger->addWarning(__("Webscale cache is not invalidated because there is another process is running. Please try again after few seconds."));
+        }catch(\Exception $e){
+            $this->_logger->addError($e->getMessage());
         }
-    }
-
-    public function checkFlag(){
-        /** @var \Forix\WebscaleTools\Model\Flag $flag */
-        $flag = $this->flagFactory->create();
-        $flag->loadSelf();
-        return time() - (int)$flag->getFlagData();
-    }
-    public function setFlag(){
-        /** @var \Forix\WebscaleTools\Model\Flag $flag */
-        $flag = $this->flagFactory->create();
-        $flag->loadSelf();
-        $flag->setFlagData(time());
-        $flag->save();
     }
 }

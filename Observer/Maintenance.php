@@ -39,6 +39,7 @@ class Maintenance implements ObserverInterface{
             } else{
                 $this->_api->stopMaintenance();
             }
+            $this->_api->flushCache();
         }catch(\Exception $e){
             $this->_logger->addCritical($e->getMessage());
         }

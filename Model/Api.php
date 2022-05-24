@@ -25,10 +25,12 @@ class Api{
     protected $_helper;
     protected $_storeManager;
     protected $_logger;
+    protected $flagFactory;
 
     public function __construct(
         Curl $curl, Data $helper,
         \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Forix\WebscaleTools\Model\FlagFactory $flag_factory,
         Logger $logger
     ){
         $this->_curl = $curl;
@@ -37,6 +39,7 @@ class Api{
         $this->_helper = $helper;
         $this->_storeManager = $storeManager;
         $this->_logger = $logger;
+        $this->flagFactory = $flag_factory;
     }
 
     public function addAuthHeader(){
@@ -81,21 +84,35 @@ class Api{
     }
 
     public function flushCache(){
-        $this->addAuthHeader();
-//        $url = $this->_storeManager->getStore()->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB) ."*";
-        $url = "https://staging.smokehouse.com/*";
-        if($appId = $this->_helper->getAppId()){
-            $data = [
-                "type"       => self::TASK_INVALIDATE_CACHE,
-                'target' => '/v2/applications/' . $appId,
-                "parameters" => [
-                    "urls" => [$url]
-                ]
-            ];
-            $this->_curl->post(self::URL, json_encode($data));
-            $this->logResp();
-            return true;
+        if(!$this->_helper->isEnable()){
+            return;
         }
-        throw new \Exception("No App Id found");
+        /** @var Flag $flag */
+        $flag = $this->flagFactory->create();
+        if($flag->checkFlag() > $this->_helper->getIntervalFlushCacheTime()){
+            $this->addAuthHeader();
+            if($appId = $this->_helper->getAppId()){
+                $stores = $this->_storeManager->getStores();
+                $baseUrls = [];
+                foreach($stores as $store){
+                    $baseUrls[] = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB)."*";
+                }
+                $data = [
+                    "type"       => self::TASK_INVALIDATE_CACHE,
+                    'target' => '/v2/applications/' . $appId,
+                    "parameters" => [
+                        "urls" => $baseUrls
+                    ]
+                ];
+                $this->_curl->post(self::URL, json_encode($data));
+                $this->logResp();
+                $flag->updateFlag();
+                return true;
+            }
+            throw new \Exception("No App Id found");
+        }else{
+            $this->_logger->addWarning(__("Webscale cache is not invalidated because there is another process is running. Please try again after few seconds."));
+        }
+
     }
 }

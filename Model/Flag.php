@@ -12,4 +12,14 @@ class Flag extends \Magento\Framework\Flag
      * @var string
      */
     protected $_flagCode = 'webscale_flush_cache';
+    public function checkFlag(){
+        $this->loadSelf();
+        return time() - (int)$this->getFlagData();
+    }
+    public function updateFlag(){
+        /** @var \Forix\WebscaleTools\Model\Flag $flag */
+        $this->loadSelf();
+        $this->setFlagData(time());
+        $this->save();
+    }
 }
